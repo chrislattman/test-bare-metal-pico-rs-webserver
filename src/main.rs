@@ -113,7 +113,7 @@ async fn main_task(spawner: Spawner) {
     .await
     .is_err()
     {
-        // If the link fails an attempt, blink the LED once
+        // If the link fails, blink the LED once
         control.gpio_set(0, true).await;
         Timer::after(Duration::from_millis(500)).await;
         control.gpio_set(0, false).await;
