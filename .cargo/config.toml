@@ -1,0 +1,10 @@
+[build]
+target = "thumbv8m.main-none-eabihf"    # Adds implicit --target thumbv8m.main-none-eabihf
+
+[target.thumbv8m.main-none-eabihf]
+rustflags = [
+    "-C", "target-cpu=cortex-m33",  # Target the Cortex-M33
+    "-C", "link-arg=-Tlink.x",      # Use link.x script with cortex-m-rt to lay out memory
+    "-C", "link-arg=--nmagic",      # Prevent padding memory between sections to save space
+]
+runner = "picotool load -u -v -x -t elf"
