@@ -1,23 +1,24 @@
 #![no_std]
 #![no_main]
 
-use core::fmt::Write;
+use core::{fmt::Write, panic::PanicInfo};
+
 use cyw43::{JoinOptions, aligned_bytes};
 use cyw43_pio::{PioSpi, RM2_CLOCK_DIVIDER};
 use embassy_executor::Spawner;
-use embassy_net::tcp::TcpSocket;
-use embassy_net::{Config, StackResources};
-use embassy_rp::clocks::RoscRng;
-use embassy_rp::gpio::{Level, Output};
-use embassy_rp::peripherals::{DMA_CH0, PIO0};
-use embassy_rp::pio::{InterruptHandler, Pio};
-use embassy_rp::{bind_interrupts, dma};
-use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
-use embassy_sync::mutex::Mutex;
+use embassy_net::{Config, StackResources, tcp::TcpSocket};
+use embassy_rp::{
+    bind_interrupts,
+    clocks::RoscRng,
+    dma,
+    gpio::{Level, Output},
+    peripherals::{DMA_CH0, PIO0},
+    pio::{InterruptHandler, Pio},
+};
+use embassy_sync::{blocking_mutex::raw::ThreadModeRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer, with_timeout};
 use embedded_io_async::Write as OtherWrite;
 use heapless::String;
-use panic_halt as _;
 use static_cell::StaticCell;
 
 const WIFI_NETWORK: &str = env!("WIFI_SSID");
@@ -264,4 +265,9 @@ async fn main_task(spawner: Spawner) {
         socket.flush().await.unwrap();
         socket.close();
     }
+}
+
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
+    loop {}
 }

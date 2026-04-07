@@ -1,4 +1,4 @@
-# Raspberry Pi Pico 2 running no_std Rust
+# Raspberry Pi Pico 2 W web server with embassy-net
 
 This is essentially a bare metal version of https://github.com/chrislattman/webserver/blob/master/server.rs
 
