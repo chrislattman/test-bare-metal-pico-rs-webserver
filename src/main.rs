@@ -132,7 +132,7 @@ async fn main_task(spawner: Spawner) {
     Timer::after(Duration::from_millis(250)).await;
     control.gpio_set(0, false).await;
 
-    // Unlike FreeRTOS with lwIP, in embassy-net *you* manage the rx and tx buffers
+    // Unlike FreeRTOS with lwIP, in embassy-net YOU manage the TX and RX buffers
     // This makes multithreading more difficult because a TcpSocket borrows those buffers
     // With that said, it's possible to have priority-based tasking in embassy:
     // https://github.com/embassy-rs/embassy/blob/main/examples/rp235x/src/bin/multiprio.rs
