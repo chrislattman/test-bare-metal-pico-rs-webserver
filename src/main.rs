@@ -136,6 +136,7 @@ async fn main_task(spawner: Spawner) {
     // This makes multithreading more difficult because a TcpSocket borrows those buffers
     // With that said, it's possible to have priority-based tasking in embassy:
     // https://github.com/embassy-rs/embassy/blob/main/examples/rp235x/src/bin/multiprio.rs
+    // Note: tasks within an executor at some priority level are still cooperative
     let mut rx_buffer = [0; 4096];
     let mut tx_buffer = [0; 4096];
 
