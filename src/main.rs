@@ -44,9 +44,6 @@ async fn net_task(mut runner: embassy_net::Runner<'static, cyw43::NetDriver<'sta
     runner.run().await
 }
 
-#[embassy_executor::task]
-async fn dummy_task() {}
-
 #[embassy_executor::main]
 async fn main_task(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
