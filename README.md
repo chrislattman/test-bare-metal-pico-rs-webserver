@@ -8,7 +8,6 @@ Instructions:
 
 - Follow the instructions at https://github.com/chrislattman/test-bare-metal-pico to install `picotool` if you haven't already
 - Run `rustup target add thumbv8m.main-none-eabihf`
-- Clone https://github.com/embassy-rs/embassy (this is because their releases on crates.io are lagging behind) as a sibling directory to this one
 - You need to set the `WIFI_SSID` and `WIFI_PASSWORD` environment variables for this example to work
 
 To build application and run on board:
