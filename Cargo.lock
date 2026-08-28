@@ -247,6 +247,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cyw43-firmware"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1f6670bcc22685ab25c8262b9bfdcdbbb12e12605569fc4bcf8b01aa5dc55c2"
+
+[[package]]
 name = "cyw43-pio"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -255,6 +261,16 @@ dependencies = [
  "cyw43",
  "embassy-rp",
  "fixed",
+]
+
+[[package]]
+name = "cyw43-setup"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46fa79051d5658db91082a95976a9561d27bd9636c9f69cd8781cae750f74df9"
+dependencies = [
+ "aligned",
+ "cyw43-firmware",
 ]
 
 [[package]]
@@ -1434,6 +1450,7 @@ dependencies = [
  "cortex-m-rt",
  "cyw43",
  "cyw43-pio",
+ "cyw43-setup",
  "embassy-executor",
  "embassy-net",
  "embassy-rp",

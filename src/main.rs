@@ -3,8 +3,9 @@
 
 use core::{fmt::Write, panic::PanicInfo};
 
-use cyw43::{JoinOptions, aligned_bytes};
+use cyw43::JoinOptions;
 use cyw43_pio::{PioSpi, RM2_CLOCK_DIVIDER};
+use cyw43_setup::{CLM, FW, NVRAM};
 use embassy_executor::Spawner;
 use embassy_net::{Config, StackResources, tcp::TcpSocket};
 use embassy_rp::{
@@ -48,9 +49,6 @@ async fn net_task(mut runner: embassy_net::Runner<'static, cyw43::NetDriver<'sta
 async fn main_task(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
     let mut rng = RoscRng;
-    let fw = aligned_bytes!("../../embassy/cyw43-firmware/43439A0.bin");
-    let clm = aligned_bytes!("../../embassy/cyw43-firmware/43439A0_clm.bin");
-    let nvram = aligned_bytes!("../../embassy/cyw43-firmware/nvram_rp2040.bin");
 
     // To make flashing faster for development, you may want to flash the firmwares independently
     // at hardcoded addresses, instead of baking them into the program with `include_bytes!`:
@@ -77,10 +75,10 @@ async fn main_task(spawner: Spawner) {
 
     static STATE: StaticCell<cyw43::State> = StaticCell::new();
     let state = STATE.init(cyw43::State::new());
-    let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw, nvram).await;
+    let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, &FW, &NVRAM).await;
     spawner.spawn(cyw43_task(runner).unwrap());
 
-    control.init(clm).await;
+    control.init(CLM).await;
     control
         .set_power_management(cyw43::PowerManagementMode::PowerSave)
         .await;
