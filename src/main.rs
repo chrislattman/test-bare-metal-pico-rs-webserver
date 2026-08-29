@@ -13,11 +13,16 @@ use embassy_rp::{
     clocks::RoscRng,
     dma,
     gpio::{Level, Output},
-    peripherals::{DMA_CH0, PIO0},
+    peripherals::{DMA_CH0, PIO0, USB},
     pio::{InterruptHandler, Pio},
+    usb::{self, Driver},
 };
 use embassy_sync::{blocking_mutex::raw::ThreadModeRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer, with_timeout};
+use embassy_usb::{
+    UsbDevice,
+    class::cdc_acm::{CdcAcmClass, State},
+};
 use embedded_io_async::Write as OtherWrite;
 use heapless::String;
 use static_cell::StaticCell;
@@ -31,6 +36,7 @@ static MUTEX: Mutex<ThreadModeRawMutex, u32> = Mutex::new(0);
 bind_interrupts!(struct Irqs {
     PIO0_IRQ_0 => InterruptHandler<PIO0>;
     DMA_IRQ_0 => dma::InterruptHandler<DMA_CH0>;
+    USBCTRL_IRQ => usb::InterruptHandler<USB>;
 });
 
 #[embassy_executor::task]
@@ -45,10 +51,16 @@ async fn net_task(mut runner: embassy_net::Runner<'static, cyw43::NetDriver<'sta
     runner.run().await
 }
 
+#[embassy_executor::task]
+async fn usb_task(mut usb: UsbDevice<'static, Driver<'static, USB>>) -> ! {
+    usb.run().await
+}
+
 #[embassy_executor::main]
 async fn main_task(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
     let mut rng = RoscRng;
+    let driver = Driver::new(p.USB, Irqs);
 
     // To make flashing faster for development, you may want to flash the firmwares independently
     // at hardcoded addresses, instead of baking them into the program with `include_bytes!`:
@@ -72,6 +84,30 @@ async fn main_task(spawner: Spawner) {
         p.PIN_29,
         dma::Channel::new(p.DMA_CH0, Irqs),
     );
+
+    let mut config = embassy_usb::Config::new(0x16c0, 0x27dd);
+    config.manufacturer = Some("Fake company");
+    config.product = Some("Serial port");
+    config.serial_number = Some("TEST");
+    config.max_power = 100;
+    config.max_packet_size_0 = 64;
+
+    static CONFIG_DESCRIPTOR: StaticCell<[u8; 256]> = StaticCell::new();
+    static BOS_DESCRIPTOR: StaticCell<[u8; 256]> = StaticCell::new();
+    static CONTROL_BUF: StaticCell<[u8; 64]> = StaticCell::new();
+    let mut builder = embassy_usb::Builder::new(
+        driver,
+        config,
+        CONFIG_DESCRIPTOR.init([0; 256]),
+        BOS_DESCRIPTOR.init([0; 256]),
+        &mut [],
+        CONTROL_BUF.init([0; 64]),
+    );
+    static CDC_STATE: StaticCell<State> = StaticCell::new();
+    let state = CDC_STATE.init(State::new());
+    let mut serial = CdcAcmClass::new(&mut builder, state, 64);
+    let usb = builder.build();
+    spawner.spawn(usb_task(usb).unwrap());
 
     static STATE: StaticCell<cyw43::State> = StaticCell::new();
     let state = STATE.init(cyw43::State::new());
@@ -146,6 +182,10 @@ async fn main_task(spawner: Spawner) {
         if !request_line.starts_with("GET") {
             continue;
         }
+        let mut req_line = String::<64>::new();
+        writeln!(req_line, "{}", request_line).unwrap();
+        serial.wait_connection().await;
+        serial.write_packet(req_line.as_bytes()).await.unwrap();
 
         // Where a separate thread would have started:
 
